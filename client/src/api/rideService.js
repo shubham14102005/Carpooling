@@ -81,16 +81,6 @@ export const rideService = {
     }
   },
 
-  // Join a ride
-  async joinRide(rideId) {
-    try {
-      const response = await api.post('/rides/join', { rideId });
-      return response.data;
-    } catch (error) {
-      throw error.response?.data || { error: 'Failed to join ride' };
-    }
-  },
-
   // Book a ride
   async bookRide(rideId) {
     try {

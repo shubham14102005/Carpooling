@@ -135,8 +135,6 @@ exports.getUserStats = async (req, res) => {
     // Mock rating for now (in real app, this would be calculated from reviews)
     const averageRating = 4.5;
     
-  // stats calculated
-    
     res.json({
       totalRides,
       totalEarnings,

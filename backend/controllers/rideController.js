@@ -34,14 +34,39 @@ exports.getRides = async (req, res) => {
   }
 };
 
-// Get ride by ID
+// Get ride by ID with detailed passenger info
 exports.getRideById = async (req, res) => {
   try {
-    const ride = await Ride.findById(req.params.id).populate("driver", "name email phone");
+    const ride = await Ride.findById(req.params.id)
+      .populate("driver", "name email phone")
+      .populate("passengers", "name email phone");
+    
     if (!ride) {
       return res.status(404).json({ message: "Ride not found" });
     }
-    res.json(ride);
+    
+    // Group passengers by unique user to show booking details
+    const passengerBookings = {};
+    ride.passengers.forEach(passenger => {
+      const passengerId = passenger._id.toString();
+      if (passengerBookings[passengerId]) {
+        passengerBookings[passengerId].seatsBooked += 1;
+      } else {
+        passengerBookings[passengerId] = {
+          user: passenger,
+          seatsBooked: 1
+        };
+      }
+    });
+    
+    // Convert to array format
+    const passengerList = Object.values(passengerBookings);
+    
+    res.json({
+      ...ride.toObject(),
+      passengerBookings: passengerList,
+      totalPassengers: ride.passengers.length
+    });
   } catch (err) {
     res.status(500).json({ message: "Error fetching ride", error: err.message });
   }
@@ -90,39 +115,19 @@ exports.getReviewableRides = async (req, res) => {
   }
 };
 
-// Join a ride
-exports.joinRide = async (req, res) => {
-  try {
-    const { rideId } = req.body;
-    const userId = req.user.id; // Use authenticated user ID
-    
-    const ride = await Ride.findById(rideId);
-    if (!ride) return res.status(404).json({ message: "Ride not found" });
 
-    if (ride.seatsAvailable <= 0) {
-      return res.status(400).json({ message: "No seats available" });
-    }
 
-    // Check if user is already a passenger
-    if (ride.passengers.includes(userId)) {
-      return res.status(400).json({ message: "Already joined this ride" });
-    }
-
-    ride.passengers.push(userId);
-    ride.seatsAvailable -= 1;
-    await ride.save();
-
-    res.json({ message: "Successfully joined ride", ride });
-  } catch (err) {
-    res.status(500).json({ message: "Error joining ride", error: err.message });
-  }
-};
-
-// Book a ride (same as join ride but with different endpoint)
+// Book a ride with multiple seats
 exports.bookRide = async (req, res) => {
   try {
     const rideId = req.params.rideId;
     const userId = req.user.id;
+    const { seatsToBook = 1 } = req.body; // Default to 1 seat if not specified
+
+    // Validate seats to book
+    if (!seatsToBook || seatsToBook < 1 || seatsToBook > 10) {
+      return res.status(400).json({ message: "Invalid number of seats. Must be between 1 and 10." });
+    }
 
     // Use atomic update to avoid triggering full-document validation
     const existing = await Ride.findById(rideId).select('driver seatsAvailable passengers');
@@ -133,28 +138,36 @@ exports.bookRide = async (req, res) => {
       return res.status(400).json({ message: "You cannot book your own ride" });
     }
 
-    if (existing.seatsAvailable <= 0) {
-      return res.status(400).json({ message: "No seats available" });
+    if (existing.seatsAvailable < seatsToBook) {
+      return res.status(400).json({ 
+        message: `Not enough seats available. Only ${existing.seatsAvailable} seats remaining.` 
+      });
     }
 
     // Check if user is already a passenger
     if (Array.isArray(existing.passengers) && existing.passengers.some(p => p.toString() === userId)) {
-      return res.status(400).json({ message: "Already booked this ride" });
+      return res.status(400).json({ message: "You have already booked this ride" });
     }
 
-    // Perform atomic update: push passenger and decrement seats
+    // Create passenger entries for multiple seats
+    const passengerEntries = Array(seatsToBook).fill(userId);
+
+    // Perform atomic update: push passenger(s) and decrement seats
     const updated = await Ride.findByIdAndUpdate(
       rideId,
       {
-        $push: { passengers: userId },
-        $inc: { seatsAvailable: -1 }
+        $push: { passengers: { $each: passengerEntries } },
+        $inc: { seatsAvailable: -seatsToBook }
       },
       { new: true }
-    ).populate('driver', 'name email phone');
+    ).populate('driver', 'name email phone')
+     .populate('passengers', 'name email phone');
 
-  // booking succeeded
-
-    res.json({ message: "Ride booked successfully", ride: updated });
+    res.json({ 
+      message: `Successfully booked ${seatsToBook} seat(s)`, 
+      seatsBooked: seatsToBook,
+      ride: updated 
+    });
   } catch (err) {
     console.error("Error booking ride:", err);
     res.status(500).json({ message: "Error booking ride", error: err.message });

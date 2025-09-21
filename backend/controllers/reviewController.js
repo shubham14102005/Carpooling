@@ -30,8 +30,6 @@ exports.createReview = async (req, res) => {
     const populatedReview = await Review.findById(review._id)
       .populate("reviewer", "name email");
     
-  // created review
-
     res.status(201).json(populatedReview);
   } catch (err) {
     res.status(500).json({ message: "Error creating review", error: err.message });
@@ -57,7 +55,6 @@ exports.getReviewsByUser = async (req, res) => {
     const reviews = await Review.find({ reviewer: req.user.id })
       .populate("reviewer", "name email")
       .sort({ createdAt: -1 });
-  // fetched reviews for user
     res.json(reviews);
   } catch (err) {
     console.error("Error fetching user reviews:", err);
@@ -71,7 +68,6 @@ exports.getAllReviews = async (req, res) => {
     const reviews = await Review.find({})
       .populate("reviewer", "name email")
       .sort({ createdAt: -1 });
-  // fetched all reviews
     res.json(reviews);
   } catch (err) {
     console.error("Error fetching all reviews:", err);

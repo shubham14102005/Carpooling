@@ -25,7 +25,6 @@ const SearchRide = () => {
 
   const fetchRides = async () => {
     try {
-  // fetching rides
       setLoading(true);
       const response = await axios.get("/rides");
       setRides(response.data);

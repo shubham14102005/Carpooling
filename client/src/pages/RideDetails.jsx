@@ -39,7 +39,7 @@ const RideDetails = () => {
       return;
     }
     
-  // Check if already booked
+    // Check if already booked
     const isAlreadyBooked = ride?.passengers?.some(passenger => 
       passenger._id === user?.id || passenger === user?.id
     );
@@ -214,41 +214,100 @@ const RideDetails = () => {
               )}
             </div>
 
-            {/* Driver Information */}
+            {/* Driver or Passenger Information */}
             {ride.driver && (
               <div className="bg-white rounded-2xl shadow-xl p-8">
-                <h2 className="text-2xl font-bold text-gray-800 mb-6">Driver Information</h2>
-                
-                <div className="flex items-start space-x-4">
-                  <div className="w-16 h-16 bg-gradient-to-r from-primary-500 to-secondary-500 rounded-full flex items-center justify-center">
-                    <span className="text-white font-semibold text-xl">
-                      {ride.driver.name ? ride.driver.name.split(' ').map(n => n[0]).join('') : 'D'}
-                    </span>
-                  </div>
-                  
-                  <div className="flex-1">
-                    <h3 className="text-xl font-bold text-gray-800 mb-2">{ride.driver.name || 'Driver'}</h3>
+                {/* Check if user is viewing their own ride */}
+                {ride.driver._id === user?.id || ride.driver === user?.id ? (
+                  /* Show passenger list for driver's own ride */
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-800 mb-6">Your Passengers</h2>
                     
-                    <div className="flex items-center space-x-4 mb-4">
-                      <div className="flex items-center space-x-1">
-                        {renderStars(4.5)}
-                        <span className="text-sm text-gray-600">(4.5)</span>
+                    {ride.passengerBookings && ride.passengerBookings.length > 0 ? (
+                      <div className="space-y-4">
+                        {ride.passengerBookings.map((booking, index) => (
+                          <div key={index} className="border rounded-lg p-4 bg-gray-50">
+                            <div className="flex items-start space-x-4">
+                              <div className="w-12 h-12 bg-gradient-to-r from-primary-500 to-secondary-500 rounded-full flex items-center justify-center">
+                                <span className="text-white font-semibold">
+                                  {booking.user.name ? booking.user.name.split(' ').map(n => n[0]).join('') : 'P'}
+                                </span>
+                              </div>
+                              
+                              <div className="flex-1">
+                                <h4 className="font-semibold text-gray-800">{booking.user.name}</h4>
+                                <p className="text-sm text-gray-600">{booking.user.email}</p>
+                                {booking.user.phone && (
+                                  <p className="text-sm text-gray-600">{booking.user.phone}</p>
+                                )}
+                                <div className="mt-2">
+                                  <span className="inline-block bg-primary-100 text-primary-800 text-xs px-2 py-1 rounded-full">
+                                    {booking.seatsBooked} seat{booking.seatsBooked > 1 ? 's' : ''} booked
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                        
+                        <div className="mt-4 p-4 bg-blue-50 rounded-lg">
+                          <div className="flex justify-between items-center text-sm">
+                            <span className="text-gray-600">Total passengers:</span>
+                            <span className="font-semibold">{ride.totalPassengers || 0}</span>
+                          </div>
+                          <div className="flex justify-between items-center text-sm">
+                            <span className="text-gray-600">Seats remaining:</span>
+                            <span className="font-semibold">{ride.seatsAvailable}</span>
+                          </div>
+                        </div>
                       </div>
-                      <span className="text-sm text-gray-600">• 25 rides completed</span>
-                    </div>
+                    ) : (
+                      <div className="text-center py-8">
+                        <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                        <p className="text-gray-600">No passengers have booked yet</p>
+                        <p className="text-sm text-gray-500 mt-2">
+                          Share your ride to get passengers!
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  /* Show driver information for other users */
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-800 mb-6">Driver Information</h2>
                     
-                    <div className="space-y-2">
-                      <div className="flex items-center space-x-2 text-sm text-gray-600">
-                        <Mail className="w-4 h-4" />
-                        <span>{ride.driver.email || 'driver@example.com'}</span>
+                    <div className="flex items-start space-x-4">
+                      <div className="w-16 h-16 bg-gradient-to-r from-primary-500 to-secondary-500 rounded-full flex items-center justify-center">
+                        <span className="text-white font-semibold text-xl">
+                          {ride.driver.name ? ride.driver.name.split(' ').map(n => n[0]).join('') : 'D'}
+                        </span>
                       </div>
-                      <div className="flex items-center space-x-2 text-sm text-gray-600">
-                        <Phone className="w-4 h-4" />
-                        <span>{ride.driver.phone || '+91 98765 43210'}</span>
+                      
+                      <div className="flex-1">
+                        <h3 className="text-xl font-bold text-gray-800 mb-2">{ride.driver.name || 'Driver'}</h3>
+                        
+                        <div className="flex items-center space-x-4 mb-4">
+                          <div className="flex items-center space-x-1">
+                            {renderStars(4.5)}
+                            <span className="text-sm text-gray-600">(4.5)</span>
+                          </div>
+                          <span className="text-sm text-gray-600">• 25 rides completed</span>
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <div className="flex items-center space-x-2 text-sm text-gray-600">
+                            <Mail className="w-4 h-4" />
+                            <span>{ride.driver.email || 'driver@example.com'}</span>
+                          </div>
+                          <div className="flex items-center space-x-2 text-sm text-gray-600">
+                            <Phone className="w-4 h-4" />
+                            <span>{ride.driver.phone || '+91 98765 43210'}</span>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
+                )}
               </div>
             )}
           </div>
@@ -278,32 +337,39 @@ const RideDetails = () => {
                 </div>
               </div>
               
-              <button
-                onClick={handleBookRide}
-                disabled={
-                  bookingLoading ||
-                  ride.seatsAvailable === 0 ||
-                  !isAuthenticated
-                }
-                className={`w-full py-4 rounded-lg font-semibold text-white transition-all duration-200 ${
-                  bookingLoading || ride.seatsAvailable === 0 || !isAuthenticated
-                    ? 'bg-gray-400 cursor-not-allowed'
-                    : 'bg-gradient-to-r from-primary-500 to-secondary-500 hover:shadow-lg hover:scale-105'
-                }`}
-              >
-                {bookingLoading ? (
-                  <div className="flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                    Booking...
-                  </div>
-                ) : ride.seatsAvailable === 0 ? (
-                  'No Seats Available'
-                ) : !isAuthenticated ? (
-                  'Login to Book'
-                ) : (
-                  'Book Now'
-                )}
-              </button>
+              {/* Show booking button only if not own ride */}
+              {ride.driver._id !== user?.id && ride.driver !== user?.id ? (
+                <button
+                  onClick={handleBookRide}
+                  disabled={
+                    bookingLoading ||
+                    ride.seatsAvailable === 0 ||
+                    !isAuthenticated
+                  }
+                  className={`w-full py-4 rounded-lg font-semibold text-white transition-all duration-200 ${
+                    bookingLoading || ride.seatsAvailable === 0 || !isAuthenticated
+                      ? 'bg-gray-400 cursor-not-allowed'
+                      : 'bg-gradient-to-r from-primary-500 to-secondary-500 hover:shadow-lg hover:scale-105'
+                  }`}
+                >
+                  {bookingLoading ? (
+                    <div className="flex items-center justify-center">
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                      Booking...
+                    </div>
+                  ) : ride.seatsAvailable === 0 ? (
+                    'No Seats Available'
+                  ) : !isAuthenticated ? (
+                    'Login to Book'
+                  ) : (
+                    'Book Now'
+                  )}
+                </button>
+              ) : (
+                <div className="w-full py-4 rounded-lg font-semibold text-center bg-green-100 text-green-700 border border-green-300">
+                  This is your ride
+                </div>
+              )}
 
             </div>
 

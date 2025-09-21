@@ -6,7 +6,6 @@ const {
   getRideById,
   searchRides, 
   getReviewableRides,
-  joinRide, 
   bookRide,
   cancelRide
 } = require("../controllers/rideController");
@@ -26,9 +25,6 @@ router.get("/search", searchRides);
 
 // GET - rides where user can give reviews (protected)
 router.get("/user/:userId/reviewable", auth, getReviewableRides);
-
-// POST - join ride (protected)
-router.post("/join", auth, joinRide);
 
 // POST - book ride (protected)
 router.post("/:rideId/book", auth, bookRide);
