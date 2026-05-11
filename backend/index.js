@@ -11,7 +11,13 @@ dotenv.config({ path: path.join(__dirname, ".env") });
 const app = express();
 
 // Middleware
-app.use(cors());
+const corsOrigins = (process.env.CLIENT_URL || "")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+const corsOptions = corsOrigins.length ? { origin: corsOrigins } : {};
+
+app.use(cors(corsOptions));
 app.use(express.json());
 
 // MongoDB connection with better error handling
@@ -24,7 +30,6 @@ const connectDB = async () => {
     }
   } catch (err) {
     console.error("❌ MongoDB connection failed:", err.message);
-    console.log(process.env.MONGO_URI );
     process.exit(1);
   }
 };
@@ -61,7 +66,8 @@ app.use("*", (req, res) => {
 const PORT = process.env.PORT || 5000;
   app.listen(PORT, () => {
     if (process.env.SHOW_LOGS !== 'false') {
+      const clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
       console.log(`🚀 Server running on port ${PORT}`);
-      console.log(`📱 Frontend should connect to: http://localhost:${PORT}`);
+      console.log(`🌐 Client URL: ${clientUrl}`);
     }
   });
