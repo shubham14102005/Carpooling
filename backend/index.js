@@ -11,11 +11,25 @@ dotenv.config({ path: path.join(__dirname, ".env") });
 const app = express();
 
 // Middleware
-const corsOrigins = (process.env.CLIENT_URL || "")
+const rawCorsOrigins = (process.env.CLIENT_URL || "")
   .split(",")
   .map((origin) => origin.trim())
   .filter(Boolean);
-const corsOptions = corsOrigins.length ? { origin: corsOrigins } : {};
+const normalizeOrigin = (origin) => origin.replace(/\/+$/, "");
+const allowedOrigins = new Set(rawCorsOrigins.map(normalizeOrigin));
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    if (!origin) {
+      return callback(null, true);
+    }
+    const normalized = normalizeOrigin(origin);
+    if (!allowedOrigins.size || allowedOrigins.has(normalized)) {
+      return callback(null, true);
+    }
+    return callback(null, false);
+  },
+};
 
 app.use(cors(corsOptions));
 app.use(express.json());
