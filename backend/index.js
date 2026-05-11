@@ -18,17 +18,13 @@ app.use(express.json());
 const connectDB = async () => {
   try {
     // Prefer env MONGO_URI/MONGODB_URI; otherwise fall back to local Compass/Community
-    const mongoURI = (
-      process.env.MONGO_URI ||
-      process.env.MONGODB_URI ||
-      "mongodb://127.0.0.1:27017/carpoolingDb"
-    ).trim();
-    await mongoose.connect(mongoURI);
+    await mongoose.connect(process.env.MONGO_URI);
     if (process.env.SHOW_LOGS !== 'false') {
       console.log("✅ MongoDB connected successfully");
     }
   } catch (err) {
     console.error("❌ MongoDB connection failed:", err.message);
+    console.log(process.env.MONGO_URI );
     process.exit(1);
   }
 };
